@@ -2,6 +2,7 @@ import { eq } from 'drizzle-orm';
 import { randomUUID } from 'node:crypto';
 import { decodeJson } from '../dialect.js';
 import { fieldSchemaList, type FieldSchema } from '../field-schema.js';
+import { ConflictError, isUniqueViolation } from '../errors.js';
 import type { Db } from '../client.js';
 import type { Category } from '../schema/index.js';
 import { categories as sqliteCategories } from '../schema/sqlite.js';
@@ -69,24 +70,29 @@ export async function createCategory(db: Db, input: CreateCategoryInput): Promis
 	const schema = fieldSchemaList.parse(input.fieldSchema);
 	const now = new Date().toISOString();
 	const id = randomUUID();
-	if (db.dialect === 'sqlite') {
-		await db.db.insert(sqliteCategories).values({
-			id,
-			name: input.name,
-			description: input.description ?? null,
-			fieldSchema: JSON.stringify(schema),
-			createdAt: now,
-			updatedAt: now,
-		});
-	} else {
-		await db.db.insert(postgresCategories).values({
-			id,
-			name: input.name,
-			description: input.description ?? null,
-			fieldSchema: schema,
-			createdAt: now,
-			updatedAt: now,
-		});
+	try {
+		if (db.dialect === 'sqlite') {
+			await db.db.insert(sqliteCategories).values({
+				id,
+				name: input.name,
+				description: input.description ?? null,
+				fieldSchema: JSON.stringify(schema),
+				createdAt: now,
+				updatedAt: now,
+			});
+		} else {
+			await db.db.insert(postgresCategories).values({
+				id,
+				name: input.name,
+				description: input.description ?? null,
+				fieldSchema: schema,
+				createdAt: now,
+				updatedAt: now,
+			});
+		}
+	} catch (err) {
+		if (isUniqueViolation(db, err)) throw new ConflictError('category', input.name);
+		throw err;
 	}
 	const created = await getCategory(db, id);
 	if (!created) throw new Error(`category ${id} not found after insert`);

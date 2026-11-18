@@ -1,7 +1,7 @@
 # Inventory App — Plan
 
 Date: 2026-11-17
-Status: In progress — M0 complete (2026-11-18), M1 in progress
+Status: In progress — M0 + M1 + M2 complete (2026-11-18)
 
 ## 1. Goals
 

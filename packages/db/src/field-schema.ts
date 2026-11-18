@@ -103,6 +103,14 @@ export function buildItemDataValidator(schema: FieldSchema) {
 	return z.object(shape).strict();
 }
 
+/** Item data failed to validate against its category field schema (→ HTTP 400). */
+export class ValidationError extends Error {
+	constructor(message: string) {
+		super(message);
+		this.name = 'ValidationError';
+	}
+}
+
 /** Validate (and clean) an item's data blob against its category schema. */
 export function validateItemData(schema: FieldSchema, data: unknown) {
 	const validator = buildItemDataValidator(schema);
@@ -111,7 +119,7 @@ export function validateItemData(schema: FieldSchema, data: unknown) {
 		const details = result.error.issues
 			.map((i) => `${i.path.join('.') || '(root)'}: ${i.message}`)
 			.join('; ');
-		throw new Error(`invalid item data: ${details}`);
+		throw new ValidationError(`invalid item data: ${details}`);
 	}
 	return result.data as Record<string, unknown>;
 }

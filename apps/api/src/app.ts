@@ -1,7 +1,10 @@
 import cors from '@fastify/cors';
-import Fastify from 'fastify';
+import Fastify, { type FastifyInstance } from 'fastify';
+import type { Db } from '@inventory/db';
+import { errorHandler } from './errors.js';
+import { registerItemsRoutes } from './routes/items.js';
 
-export function buildApp() {
+export function buildApp(db: Db): FastifyInstance {
 	const app = Fastify({
 		logger: false,
 	});
@@ -10,9 +13,13 @@ export function buildApp() {
 		origin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : true,
 	});
 
+	app.setErrorHandler(errorHandler);
+
 	app.get('/api/health', () => ({
 		status: 'ok',
 	}));
+
+	registerItemsRoutes(app, db);
 
 	return app;
 }

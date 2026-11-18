@@ -1,6 +1,7 @@
 export { createDb, closeDb, type Db, type SqliteHandle, type PostgresHandle } from './client.js';
 export type { SqliteDb, PostgresDb } from './client.js';
 export { runMigrations } from './migrate.js';
+export { ConflictError, isUniqueViolation } from './errors.js';
 export { seedCategories, SEED_CATEGORIES, type SeedCategory } from './seed.js';
 export {
 	FIELD_TYPES,
@@ -10,6 +11,7 @@ export {
 	SKU_PATTERN,
 	buildItemDataValidator,
 	validateItemData,
+	ValidationError,
 	type FieldType,
 	type FieldDefinition,
 	type FieldSchema,

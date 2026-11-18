@@ -4,13 +4,9 @@ import type { Db } from '../client.js';
 import type { Project } from '../schema/index.js';
 import { projects as sqliteProjects } from '../schema/sqlite.js';
 import { projects as postgresProjects } from '../schema/postgres.js';
+import { NotFoundError } from './items.js';
 
-export class NotFoundError extends Error {
-	constructor(entity: string, id: string) {
-		super(`${entity} not found: ${id}`);
-		this.name = 'NotFoundError';
-	}
-}
+export { NotFoundError };
 
 export interface CreateProjectInput {
 	name: string;

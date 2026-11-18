@@ -19,13 +19,17 @@ export {
 	recordReservationEvent,
 	listMovements,
 	roundQty,
+	NotFoundError,
 	NotFoundError as ItemNotFoundError,
 	InsufficientQuantityError,
+	DeleteBlockedError,
 	type CreateItemInput,
 	type UpdateItemInput,
 	type MoveItemInput,
 	type MoveResult,
+	type ListItemOptions,
 } from './items.js';
+export { searchItems, type SearchItemsOptions, type SearchItemsResult } from './search.js';
 export {
 	listProjects,
 	getProject,

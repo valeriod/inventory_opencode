@@ -1,4 +1,4 @@
-import { and, eq, isNull } from 'drizzle-orm';
+import { and, eq, gte, isNull } from 'drizzle-orm';
 import { decodeJson } from '../dialect.js';
 import { skuSchema, validateItemData, type FieldSchema } from '../field-schema.js';
 import type { Db } from '../client.js';
@@ -13,6 +13,7 @@ import {
 	movements as postgresMovements,
 	allocations as postgresAllocations,
 } from '../schema/postgres.js';
+import { ConflictError, isUniqueViolation } from '../errors.js';
 import { getCategory } from './categories.js';
 
 export class NotFoundError extends Error {
@@ -28,6 +29,14 @@ export class InsufficientQuantityError extends Error {
 			`insufficient quantity for ${sku}: would result in ${resulting} on hand (currently ${onHand})`,
 		);
 		this.name = 'InsufficientQuantityError';
+	}
+}
+
+/** Item cannot be deleted: stock still on hand or parts still reserved. */
+export class DeleteBlockedError extends Error {
+	constructor(sku: string, reason: string) {
+		super(`cannot delete ${sku}: ${reason}`);
+		this.name = 'DeleteBlockedError';
 	}
 }
 
@@ -109,30 +118,40 @@ export interface MoveResult {
 	movement: Movement;
 }
 
-export async function listItem(
-	db: Db,
-	opts?: { limit?: number; offset?: number; categoryId?: string; location?: string },
-): Promise<Item[]> {
+export interface ListItemOptions {
+	limit?: number;
+	offset?: number;
+	categoryId?: string;
+	/** Only items with quantity on hand >= minQty. */
+	minQty?: number;
+}
+
+export async function listItem(db: Db, opts?: ListItemOptions): Promise<Item[]> {
 	const limit = opts?.limit ?? 100;
 	const offset = opts?.offset ?? 0;
-	const rows: RawItemRow[] =
-		db.dialect === 'sqlite'
-			? opts?.categoryId
-				? await db.db
-						.select()
-						.from(sqliteItems)
-						.where(eq(sqliteItems.categoryId, opts.categoryId))
-						.limit(limit)
-						.offset(offset)
-				: await db.db.select().from(sqliteItems).limit(limit).offset(offset)
-			: opts?.categoryId
-				? await db.db
-						.select()
-						.from(postgresItems)
-						.where(eq(postgresItems.categoryId, opts.categoryId))
-						.limit(limit)
-						.offset(offset)
-				: await db.db.select().from(postgresItems).limit(limit).offset(offset);
+	if (db.dialect === 'sqlite') {
+		const conds = [
+			opts?.categoryId ? eq(sqliteItems.categoryId, opts.categoryId) : undefined,
+			opts?.minQty !== undefined ? gte(sqliteItems.quantityOnHand, opts.minQty) : undefined,
+		];
+		const rows: RawItemRow[] = await db.db
+			.select()
+			.from(sqliteItems)
+			.where(and(...conds))
+			.limit(limit)
+			.offset(offset);
+		return rows.map((r) => normalizeItem(db, r));
+	}
+	const conds = [
+		opts?.categoryId ? eq(postgresItems.categoryId, opts.categoryId) : undefined,
+		opts?.minQty !== undefined ? gte(postgresItems.quantityOnHand, opts.minQty) : undefined,
+	];
+	const rows: RawItemRow[] = await db.db
+		.select()
+		.from(postgresItems)
+		.where(and(...conds))
+		.limit(limit)
+		.offset(offset);
 	return rows.map((r) => normalizeItem(db, r));
 }
 
@@ -175,34 +194,39 @@ export async function createItem(db: Db, input: CreateItemInput): Promise<Item> 
 		input.data === null || input.data === undefined ? null : validateItemData(category, input.data);
 	const now = new Date().toISOString();
 
-	if (db.dialect === 'sqlite') {
-		await db.db.insert(sqliteItems).values({
-			sku,
-			categoryId: input.categoryId,
-			name: input.name,
-			description: input.description ?? null,
-			unit: input.unit ?? null,
-			quantityOnHand: 0,
-			unitCost: input.unitCost ?? null,
-			location: input.location ?? null,
-			data: data === null ? null : JSON.stringify(data),
-			createdAt: now,
-			updatedAt: now,
-		});
-	} else {
-		await db.db.insert(postgresItems).values({
-			sku,
-			categoryId: input.categoryId,
-			name: input.name,
-			description: input.description ?? null,
-			unit: input.unit ?? null,
-			quantityOnHand: 0,
-			unitCost: input.unitCost ?? null,
-			location: input.location ?? null,
-			data,
-			createdAt: now,
-			updatedAt: now,
-		});
+	try {
+		if (db.dialect === 'sqlite') {
+			await db.db.insert(sqliteItems).values({
+				sku,
+				categoryId: input.categoryId,
+				name: input.name,
+				description: input.description ?? null,
+				unit: input.unit ?? null,
+				quantityOnHand: 0,
+				unitCost: input.unitCost ?? null,
+				location: input.location ?? null,
+				data: data === null ? null : JSON.stringify(data),
+				createdAt: now,
+				updatedAt: now,
+			});
+		} else {
+			await db.db.insert(postgresItems).values({
+				sku,
+				categoryId: input.categoryId,
+				name: input.name,
+				description: input.description ?? null,
+				unit: input.unit ?? null,
+				quantityOnHand: 0,
+				unitCost: input.unitCost ?? null,
+				location: input.location ?? null,
+				data,
+				createdAt: now,
+				updatedAt: now,
+			});
+		}
+	} catch (err) {
+		if (isUniqueViolation(db, err)) throw new ConflictError('item', sku);
+		throw err;
 	}
 	const created = await fetchItem(db, sku);
 	if (!created) throw new Error(`item ${sku} not found after insert`);
@@ -253,11 +277,11 @@ export async function deleteItem(db: Db, sku: string): Promise<void> {
 	const item = await fetchItem(db, sku);
 	if (!item) throw new NotFoundError('item', sku);
 	if (item.quantityOnHand !== 0) {
-		throw new Error(`cannot delete ${sku}: quantity on hand is ${item.quantityOnHand}`);
+		throw new DeleteBlockedError(sku, `quantity on hand is ${item.quantityOnHand}`);
 	}
 	const reserved = await reservedQuantity(db, sku);
 	if (reserved !== 0) {
-		throw new Error(`cannot delete ${sku}: ${reserved} unit(s) still reserved`);
+		throw new DeleteBlockedError(sku, `${reserved} unit(s) still reserved`);
 	}
 	if (db.dialect === 'sqlite') {
 		await db.db.delete(sqliteItems).where(eq(sqliteItems.sku, sku));
