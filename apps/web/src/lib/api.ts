@@ -192,7 +192,9 @@ export interface ListItemsParams {
 
 export const api = {
 	listItems(params: ListItemsParams = {}): Promise<ItemListResult> {
-		return request<ItemListResult>(`/items${qs(params as Record<string, string | number | undefined>)}`);
+		return request<ItemListResult>(
+			`/items${qs(params as Record<string, string | number | undefined>)}`,
+		);
 	},
 	getItem: (sku: string) => request<ItemDetail>(itemPath(sku)),
 	createItem: (body: unknown) =>
@@ -222,7 +224,10 @@ export const api = {
 	createProject: (body: unknown) =>
 		request<{ project: Project }>('/projects', { method: 'POST', body: JSON.stringify(body) }),
 	updateProject: (id: string, body: unknown) =>
-		request<{ project: Project }>(`/projects/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
+		request<{ project: Project }>(`/projects/${id}`, {
+			method: 'PATCH',
+			body: JSON.stringify(body),
+		}),
 
 	createAllocation: (body: unknown) =>
 		request<{ allocation: Allocation }>('/allocations', {

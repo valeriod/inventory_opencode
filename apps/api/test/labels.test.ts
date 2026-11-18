@@ -21,7 +21,9 @@ function labelsSuite(engine: Engine): void {
 				expect(svgText).toContain('<svg');
 				expect(svgText).toContain('</svg>');
 
-				const c128 = await env.request({ url: `${itemUrl(SKUS.res10k)}/label?format=svg&size=code128` });
+				const c128 = await env.request({
+					url: `${itemUrl(SKUS.res10k)}/label?format=svg&size=code128`,
+				});
 				const c128Text = await c128.text();
 				expect(c128Text).toContain('<svg');
 			} finally {
@@ -55,7 +57,9 @@ function labelsSuite(engine: Engine): void {
 				expect(html).toContain('A3-12');
 				expect(html).toContain('<svg');
 
-				const res46 = await env.request({ url: `/api/labels/print?sku=${encodeURIComponent(SKUS.res10k)}&layout=4x6` });
+				const res46 = await env.request({
+					url: `/api/labels/print?sku=${encodeURIComponent(SKUS.res10k)}&layout=4x6`,
+				});
 				const html46 = await res46.text();
 				expect(html46).toContain('4in 6in');
 			} finally {

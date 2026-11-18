@@ -8,6 +8,13 @@
 			"when": 1794999019439,
 			"tag": "0000_youthful_micromax",
 			"breakpoints": true
+		},
+		{
+			"idx": 1,
+			"version": "7",
+			"when": 1795025183439,
+			"tag": "0001_elite_lizard",
+			"breakpoints": true
 		}
 	]
 }

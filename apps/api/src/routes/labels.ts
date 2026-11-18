@@ -96,9 +96,7 @@ export function registerLabelRoutes(app: FastifyInstance, db: Db): void {
 				const name = item ? esc(item.name) : '<em>Unknown item</em>';
 				const loc = item?.location ? esc(item.location) : '—';
 				const qty =
-					item != null
-						? `${item.quantityOnHand}${item.unit ? ` ${esc(item.unit)}` : ''}`
-						: '—';
+					item != null ? `${item.quantityOnHand}${item.unit ? ` ${esc(item.unit)}` : ''}` : '—';
 				return `<div class="label">
   <div class="top">
     <div class="name">${name}</div>

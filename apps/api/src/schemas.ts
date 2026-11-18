@@ -139,7 +139,10 @@ export const labelItemQuery = z.object({
 });
 
 export const labelsPrintQuery = z.object({
-	sku: z.preprocess((v) => (Array.isArray(v) ? v : v === undefined ? [] : [v]), z.array(z.string().min(1)).max(200)),
+	sku: z.preprocess(
+		(v) => (Array.isArray(v) ? v : v === undefined ? [] : [v]),
+		z.array(z.string().min(1)).max(200),
+	),
 	layout: z.enum(['a5', '4x6']).optional(),
 });
 

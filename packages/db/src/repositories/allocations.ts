@@ -41,7 +41,10 @@ function assertPositiveQuantity(quantity: number): number {
 async function assertProjectExists(db: Db, projectId: string): Promise<void> {
 	const rows =
 		db.dialect === 'sqlite'
-			? await db.db.select({ id: sqliteProjects.id }).from(sqliteProjects).where(eq(sqliteProjects.id, projectId))
+			? await db.db
+					.select({ id: sqliteProjects.id })
+					.from(sqliteProjects)
+					.where(eq(sqliteProjects.id, projectId))
 			: await db.db
 					.select({ id: postgresProjects.id })
 					.from(postgresProjects)
@@ -305,9 +308,7 @@ export async function updateAllocationQuantity(
 			const reservedRows = tx
 				.select()
 				.from(sqliteAllocations)
-				.where(
-					and(eq(sqliteAllocations.sku, allocation.sku), isNull(sqliteAllocations.releasedAt)),
-				)
+				.where(and(eq(sqliteAllocations.sku, allocation.sku), isNull(sqliteAllocations.releasedAt)))
 				.all();
 			const reserved = roundQty(reservedRows.reduce((sum, r) => sum + Number(r.quantity), 0));
 			const othersReserved = roundQty(reserved - Number(allocation.quantity));

@@ -60,6 +60,8 @@ export const allocations = sqliteTable(
 	(t) => [
 		index('allocations_project_id_idx').on(t.projectId),
 		index('allocations_sku_idx').on(t.sku),
+		index('allocations_project_released_idx').on(t.projectId, t.releasedAt),
+		index('allocations_sku_released_idx').on(t.sku, t.releasedAt),
 		check('allocations_quantity_positive', sql`quantity > 0`),
 	],
 );
@@ -76,5 +78,9 @@ export const movements = sqliteTable(
 		reference: text('reference'),
 		createdAt: text('created_at').notNull(),
 	},
-	(t) => [index('movements_sku_idx').on(t.sku)],
+	(t) => [
+		index('movements_sku_idx').on(t.sku),
+		index('movements_created_at_idx').on(t.createdAt),
+		index('movements_sku_created_at_idx').on(t.sku, t.createdAt),
+	],
 );

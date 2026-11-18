@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { createFixtureItems, getCategoryByName, itemUrl, makeEnv, SKUS, type Engine } from './env.js';
+import {
+	createFixtureItems,
+	getCategoryByName,
+	itemUrl,
+	makeEnv,
+	SKUS,
+	type Engine,
+} from './env.js';
 
 function reportsSuite(engine: Engine): void {
 	describe(`[api: ${engine}] reports`, () => {
@@ -39,7 +46,13 @@ function reportsSuite(engine: Engine): void {
 					rows: { label: string; itemCount: number; totalQuantity: number }[];
 				};
 				const a3 = byLoc.rows.find((r) => r.label === 'A3-12');
-				expect(a3).toEqual({ key: 'A3-12', label: 'A3-12', itemCount: 2, totalQuantity: 12, totalValue: 0 });
+				expect(a3).toEqual({
+					key: 'A3-12',
+					label: 'A3-12',
+					itemCount: 2,
+					totalQuantity: 12,
+					totalValue: 0,
+				});
 
 				const resistorsCat = await getCategoryByName(env.db, 'Resistors');
 				const filteredRes = await env.request({
@@ -115,7 +128,9 @@ function reportsSuite(engine: Engine): void {
 					body: { delta: 5, reason: 'received' },
 				});
 
-				const res = await env.request({ url: `/api/reports/movements?sku=${encodeURIComponent(SKUS.res10k)}` });
+				const res = await env.request({
+					url: `/api/reports/movements?sku=${encodeURIComponent(SKUS.res10k)}`,
+				});
 				expect(res.status).toBe(200);
 				const body = (await res.json()) as {
 					rows: { sku: string; delta: number; reference: string | null; itemName: string | null }[];
@@ -126,12 +141,16 @@ function reportsSuite(engine: Engine): void {
 				expect(body.rows[0].itemName).toBe('10kΩ resistor 1%');
 
 				const today = new Date().toISOString().slice(0, 10);
-				const ranged = await env.request({ url: `/api/reports/movements?from=${today}&to=${today}` });
+				const ranged = await env.request({
+					url: `/api/reports/movements?from=${today}&to=${today}`,
+				});
 				const rangedBody = (await ranged.json()) as { rows: unknown[] };
 				expect(rangedBody.rows.length).toBe(3);
 
 				const future = '2099-01-01';
-				const none = await env.request({ url: `/api/reports/movements?from=${future}&to=${future}` });
+				const none = await env.request({
+					url: `/api/reports/movements?from=${future}&to=${future}`,
+				});
 				expect(((await none.json()) as { rows: unknown[] }).rows).toHaveLength(0);
 			} finally {
 				await env.teardown();
@@ -175,7 +194,12 @@ function reportsSuite(engine: Engine): void {
 				const res = await env.request({ url: '/api/reports/projects' });
 				expect(res.status).toBe(200);
 				const body = (await res.json()) as {
-					rows: { name: string; status: string; activeAllocations: number; reservedQuantity: number }[];
+					rows: {
+						name: string;
+						status: string;
+						activeAllocations: number;
+						reservedQuantity: number;
+					}[];
 				};
 				expect(body.rows).toHaveLength(2);
 				const active = body.rows.find((r) => r.name === 'Active Project');
@@ -201,7 +225,9 @@ function reportsSuite(engine: Engine): void {
 					body: { delta: 10, reason: 'received', reference: 'PO-1' },
 				});
 
-				const summary = await env.request({ url: '/api/reports/export.csv?report=summary&groupBy=category' });
+				const summary = await env.request({
+					url: '/api/reports/export.csv?report=summary&groupBy=category',
+				});
 				expect(summary.status).toBe(200);
 				expect(String(summary.headers['content-type'])).toContain('text/csv');
 				expect(String(summary.headers['content-disposition'])).toContain('summary.csv');

@@ -82,7 +82,9 @@
 	<div class="space-y-6">
 		<div class="flex flex-wrap items-start justify-between gap-4">
 			<div>
-				<a href={resolve('/projects')} class="text-sm text-neutral-500 hover:underline">← Projects</a>
+				<a href={resolve('/projects')} class="text-sm text-neutral-500 hover:underline">
+					← Projects
+				</a>
 				<h1 class="mt-1 text-2xl font-semibold">{project.name}</h1>
 				{#if project.description}
 					<p class="text-sm text-neutral-500">{project.description}</p>
@@ -242,7 +244,9 @@
 							</tr>
 						{:else}
 							<tr>
-								<td class="py-6 text-center text-neutral-500" colspan="5">No active allocations.</td>
+								<td class="py-6 text-center text-neutral-500" colspan="5">
+									No active allocations.
+								</td>
 							</tr>
 						{/each}
 					</tbody>
@@ -280,7 +284,9 @@
 							</tr>
 						{:else}
 							<tr>
-								<td class="py-6 text-center text-neutral-500" colspan="5">No released allocations.</td>
+								<td class="py-6 text-center text-neutral-500" colspan="5">
+									No released allocations.
+								</td>
 							</tr>
 						{/each}
 					</tbody>

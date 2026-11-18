@@ -8,8 +8,16 @@
 	const projects = createQuery(() => ({
 		queryKey: ['projects'],
 		queryFn: api.listProjects,
-		select: (res: { projects: { id: string; name: string; status: string; activeAllocations: number; reservedQuantity: number; description: string | null }[] }) =>
-			res.projects,
+		select: (res: {
+			projects: {
+				id: string;
+				name: string;
+				status: string;
+				activeAllocations: number;
+				reservedQuantity: number;
+				description: string | null;
+			}[];
+		}) => res.projects,
 	}));
 
 	let name = $state('');
@@ -102,7 +110,10 @@
 					{#each projects.data ?? [] as p (p.id)}
 						<tr class="border-b border-neutral-100 hover:bg-neutral-100">
 							<td class="py-2 pr-4">
-								<a href={resolve('/projects/[id]', { id: p.id })} class="font-medium hover:underline">
+								<a
+									href={resolve('/projects/[id]', { id: p.id })}
+									class="font-medium hover:underline"
+								>
 									{p.name}
 								</a>
 								{#if p.description}

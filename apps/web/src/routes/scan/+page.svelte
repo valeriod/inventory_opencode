@@ -281,7 +281,7 @@
 
 	<p class="text-xs text-neutral-500">
 		Supported: Code 128, Code 39, EAN-13/UPC, ITF, QR, DataMatrix. Phone cameras require HTTPS in
-		production (or localhost). For LAN use, serve behind a TLS reverse proxy (e.g. Caddy) or a trusted
-		cert.
+		production (or localhost). For LAN use, serve behind a TLS reverse proxy (e.g. Caddy) or a
+		trusted cert.
 	</p>
 </div>

@@ -120,8 +120,9 @@
 				<button
 					class="rounded-md border border-red-300 px-3 py-1.5 text-sm text-red-700 hover:bg-red-50"
 					onclick={() =>
-						confirm(`Delete ${item.sku}? This only works when stock is 0 and nothing is reserved.`) &&
-						deleteMutation.mutate()}
+						confirm(
+							`Delete ${item.sku}? This only works when stock is 0 and nothing is reserved.`,
+						) && deleteMutation.mutate()}
 				>
 					Delete
 				</button>
@@ -188,7 +189,9 @@
 					/>
 				</div>
 				<div class="text-xs text-neutral-500">
-					SKU is encoded in both symbologies. Use <a href={resolve('/labels')} class="underline">Labels</a> for batch print sheets.
+					SKU is encoded in both symbologies. Use <a href={resolve('/labels')} class="underline">
+						Labels
+					</a> for batch print sheets.
 				</div>
 			</div>
 		</section>

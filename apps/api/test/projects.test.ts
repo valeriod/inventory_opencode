@@ -1,12 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-	createFixtureItems,
-	itemUrl,
-	makeEnv,
-	SKUS,
-	type Api,
-	type Engine,
-} from './env.js';
+import { createFixtureItems, itemUrl, makeEnv, SKUS, type Api, type Engine } from './env.js';
 
 interface ProjectSummary {
 	id: string;
@@ -137,7 +130,9 @@ function projectsSuite(engine: Engine): void {
 				expect(over.status).toBe(409);
 
 				// project detail/stats reflect active reservation
-				const detail = (await (await env.request({ url: `/api/projects/${project.id}` })).json()) as {
+				const detail = (await (
+					await env.request({ url: `/api/projects/${project.id}` })
+				).json()) as {
 					project: ProjectDetail;
 				};
 				expect(detail.project.activeAllocations).toBe(1);
@@ -161,10 +156,14 @@ function projectsSuite(engine: Engine): void {
 				expect(itemAfter.available).toBe(10);
 
 				// history shows reserved + released with delta 0
-				const moves = (await (await env.request({ url: itemUrl(SKUS.res10k) + '/movements' })).json()) as {
+				const moves = (await (
+					await env.request({ url: itemUrl(SKUS.res10k) + '/movements' })
+				).json()) as {
 					movements: { reason: string; delta: number; projectId: string | null }[];
 				};
-				const events = moves.movements.filter((m) => m.reason === 'reserved' || m.reason === 'released');
+				const events = moves.movements.filter(
+					(m) => m.reason === 'reserved' || m.reason === 'released',
+				);
 				expect(events).toHaveLength(2);
 				expect(events.every((m) => m.delta === 0)).toBe(true);
 				expect(events.every((m) => m.projectId === project.id)).toBe(true);
@@ -259,7 +258,9 @@ function projectsSuite(engine: Engine): void {
 				expect(ok.length).toBeLessThanOrEqual(3);
 				expect(ok.length + conflict.length).toBe(8);
 
-				const detail = (await (await env.request({ url: `/api/projects/${project.id}` })).json()) as {
+				const detail = (await (
+					await env.request({ url: `/api/projects/${project.id}` })
+				).json()) as {
 					project: ProjectDetail;
 				};
 				expect(detail.project.activeAllocations).toBe(ok.length);

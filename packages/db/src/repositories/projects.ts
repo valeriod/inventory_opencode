@@ -83,9 +83,8 @@ export async function listProjectsWithStats(db: Db): Promise<ProjectSummary[]> {
 		.select({
 			projectId: postgresAllocations.projectId,
 			activeAllocations: sql<number>`count(*)::int`.mapWith(Number),
-			reservedQuantity: sql<number>`coalesce(sum(${postgresAllocations.quantity}), 0)::float`.mapWith(
-				Number,
-			),
+			reservedQuantity:
+				sql<number>`coalesce(sum(${postgresAllocations.quantity}), 0)::float`.mapWith(Number),
 		})
 		.from(postgresAllocations)
 		.where(isNull(postgresAllocations.releasedAt))

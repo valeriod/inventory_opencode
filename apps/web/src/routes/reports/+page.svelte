@@ -10,8 +10,7 @@
 	let summaryCategory = $state('');
 	const summary = createQuery(() => ({
 		queryKey: ['report', 'summary', groupBy, summaryCategory],
-		queryFn: () =>
-			api.getSummaryReport({ groupBy, category: summaryCategory || undefined }),
+		queryFn: () => api.getSummaryReport({ groupBy, category: summaryCategory || undefined }),
 		enabled: tab === 'summary',
 	}));
 
@@ -92,12 +91,7 @@
 	<h1 class="hidden text-2xl font-semibold print:block">Inventory reports</h1>
 
 	<div class="flex flex-wrap gap-2 border-b border-neutral-200 print:hidden">
-		{#each [
-			['summary', 'Summary'],
-			['low-stock', 'Low stock'],
-			['movements', 'Movements'],
-			['projects', 'Projects'],
-		] as [key, label] (key)}
+		{#each [['summary', 'Summary'], ['low-stock', 'Low stock'], ['movements', 'Movements'], ['projects', 'Projects']] as [key, label] (key)}
 			<button
 				class="px-3 py-2 text-sm {tab === key
 					? 'border-b-2 border-neutral-900 font-medium'
@@ -114,7 +108,10 @@
 			<div class="flex flex-wrap items-end gap-3 print:hidden">
 				<label class="flex flex-col gap-1 text-sm">
 					<span class="text-neutral-600">Group by</span>
-					<select bind:value={groupBy} class="rounded-md border border-neutral-300 bg-white px-3 py-1.5 text-sm">
+					<select
+						bind:value={groupBy}
+						class="rounded-md border border-neutral-300 bg-white px-3 py-1.5 text-sm"
+					>
 						<option value="category">Category</option>
 						<option value="location">Location</option>
 					</select>
@@ -148,7 +145,9 @@
 				<table class="w-full border-collapse text-sm">
 					<thead>
 						<tr class="border-b border-neutral-300 text-left text-neutral-500">
-							<th class="py-2 pr-4 font-medium">{groupBy === 'category' ? 'Category' : 'Location'}</th>
+							<th class="py-2 pr-4 font-medium">
+								{groupBy === 'category' ? 'Category' : 'Location'}
+							</th>
 							<th class="py-2 pr-4 text-right font-medium">Items</th>
 							<th class="py-2 pr-4 text-right font-medium">Total qty</th>
 							<th class="py-2 pr-4 text-right font-medium">Total value (USD)</th>
@@ -191,7 +190,10 @@
 				</label>
 				<label class="flex flex-col gap-1 text-sm">
 					<span class="text-neutral-600">Category</span>
-					<select bind:value={lowCategory} class="rounded-md border border-neutral-300 bg-white px-3 py-1.5 text-sm">
+					<select
+						bind:value={lowCategory}
+						class="rounded-md border border-neutral-300 bg-white px-3 py-1.5 text-sm"
+					>
 						<option value="">All</option>
 						{#each categories.data ?? [] as c (c.id)}
 							<option value={c.id}>{c.name}</option>
@@ -219,10 +221,14 @@
 								<td class="py-2 pr-4">{row.name}</td>
 								<td class="py-2 pr-4 text-neutral-500">{row.categoryName ?? '—'}</td>
 								<td class="py-2 pr-4 text-neutral-500">{row.location ?? '—'}</td>
-								<td class="py-2 pr-4 text-right">{row.quantityOnHand}{row.unit ? ` ${row.unit}` : ''}</td>
+								<td class="py-2 pr-4 text-right">
+									{row.quantityOnHand}{row.unit ? ` ${row.unit}` : ''}
+								</td>
 							</tr>
 						{:else}
-							<tr><td class="py-4 text-center text-neutral-500" colspan="5">No low-stock items.</td></tr>
+							<tr>
+								<td class="py-4 text-center text-neutral-500" colspan="5">No low-stock items.</td>
+							</tr>
 						{/each}
 					</tbody>
 				</table>
@@ -233,15 +239,27 @@
 			<div class="flex flex-wrap items-end gap-3 print:hidden">
 				<label class="flex flex-col gap-1 text-sm">
 					<span class="text-neutral-600">SKU</span>
-					<input bind:value={movSku} class="w-40 rounded-md border border-neutral-300 px-3 py-1.5 font-mono text-sm" placeholder="optional" />
+					<input
+						bind:value={movSku}
+						class="w-40 rounded-md border border-neutral-300 px-3 py-1.5 font-mono text-sm"
+						placeholder="optional"
+					/>
 				</label>
 				<label class="flex flex-col gap-1 text-sm">
 					<span class="text-neutral-600">From</span>
-					<input type="date" bind:value={movFrom} class="rounded-md border border-neutral-300 px-3 py-1.5 text-sm" />
+					<input
+						type="date"
+						bind:value={movFrom}
+						class="rounded-md border border-neutral-300 px-3 py-1.5 text-sm"
+					/>
 				</label>
 				<label class="flex flex-col gap-1 text-sm">
 					<span class="text-neutral-600">To</span>
-					<input type="date" bind:value={movTo} class="rounded-md border border-neutral-300 px-3 py-1.5 text-sm" />
+					<input
+						type="date"
+						bind:value={movTo}
+						class="rounded-md border border-neutral-300 px-3 py-1.5 text-sm"
+					/>
 				</label>
 				<!-- eslint-disable svelte/no-navigation-without-resolve -->
 				<a
@@ -274,7 +292,13 @@
 								<td class="py-2 pr-4 text-neutral-500">{new Date(m.createdAt).toLocaleString()}</td>
 								<td class="py-2 pr-4 font-mono">{m.sku}</td>
 								<td class="py-2 pr-4">{m.itemName ?? '—'}</td>
-								<td class="py-2 pr-4 text-right {m.delta > 0 ? 'text-emerald-700' : m.delta < 0 ? 'text-red-700' : ''}">
+								<td
+									class="py-2 pr-4 text-right {m.delta > 0
+										? 'text-emerald-700'
+										: m.delta < 0
+											? 'text-red-700'
+											: ''}"
+								>
 									{m.delta > 0 ? `+${m.delta}` : m.delta}
 								</td>
 								<td class="py-2 pr-4 text-right">{m.resultingQty}</td>
@@ -293,7 +317,10 @@
 			<div class="flex flex-wrap items-end gap-3 print:hidden">
 				<label class="flex flex-col gap-1 text-sm">
 					<span class="text-neutral-600">Status</span>
-					<select bind:value={projStatus} class="rounded-md border border-neutral-300 bg-white px-3 py-1.5 text-sm">
+					<select
+						bind:value={projStatus}
+						class="rounded-md border border-neutral-300 bg-white px-3 py-1.5 text-sm"
+					>
 						<option value="">All</option>
 						<option value="active">Active</option>
 						<option value="closed">Closed</option>
@@ -317,7 +344,9 @@
 							<tr class="border-b border-neutral-100">
 								<td class="py-2 pr-4">
 									<div class="font-medium">{p.name}</div>
-									{#if p.description}<div class="text-xs text-neutral-500">{p.description}</div>{/if}
+									{#if p.description}<div class="text-xs text-neutral-500">
+											{p.description}
+										</div>{/if}
 								</td>
 								<td class="py-2 pr-4">{p.status}</td>
 								<td class="py-2 pr-4 text-right">{p.activeAllocations}</td>

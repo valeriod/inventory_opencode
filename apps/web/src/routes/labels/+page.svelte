@@ -69,9 +69,9 @@
 					</a>
 					<!-- eslint-enable svelte/no-navigation-without-resolve -->
 				{:else}
-					<span class="rounded-md bg-neutral-200 px-3 py-1.5 text-sm text-neutral-500"
-						>Open printable sheet</span
-					>
+					<span class="rounded-md bg-neutral-200 px-3 py-1.5 text-sm text-neutral-500">
+						Open printable sheet
+					</span>
 				{/if}
 			</div>
 

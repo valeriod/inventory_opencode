@@ -148,7 +148,9 @@
 					oninput={() => (sku = sku.toUpperCase())}
 					class="w-full rounded-md border border-neutral-300 px-3 py-1.5 font-mono text-sm uppercase"
 				/>
-				<p class="mt-1 text-xs text-neutral-500">3–32 chars: A–Z, 0–9, <code>-</code>, <code>%</code></p>
+				<p class="mt-1 text-xs text-neutral-500">
+					3–32 chars: A–Z, 0–9, <code>-</code>, <code>%</code>
+				</p>
 			</div>
 			<div>
 				<label class="mb-1 block text-sm font-medium">

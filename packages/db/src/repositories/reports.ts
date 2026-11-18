@@ -68,9 +68,8 @@ export async function summaryReport(
 			.select({
 				key: keyExpr,
 				itemCount: sql<number>`count(*)::int`.mapWith(Number),
-				totalQuantity: sql<number>`coalesce(sum(${postgresItems.quantityOnHand}), 0)::float`.mapWith(
-					Number,
-				),
+				totalQuantity:
+					sql<number>`coalesce(sum(${postgresItems.quantityOnHand}), 0)::float`.mapWith(Number),
 				totalValue:
 					sql<number>`coalesce(sum(${postgresItems.quantityOnHand} * coalesce(${postgresItems.unitCost}, 0)), 0)::float`.mapWith(
 						Number,
@@ -360,9 +359,8 @@ export async function projectsReport(
 		.select({
 			projectId: postgresAllocations.projectId,
 			activeAllocations: sql<number>`count(*)::int`.mapWith(Number),
-			reservedQuantity: sql<number>`coalesce(sum(${postgresAllocations.quantity}), 0)::float`.mapWith(
-				Number,
-			),
+			reservedQuantity:
+				sql<number>`coalesce(sum(${postgresAllocations.quantity}), 0)::float`.mapWith(Number),
 		})
 		.from(postgresAllocations)
 		.where(sql`${postgresAllocations.releasedAt} is null`)
