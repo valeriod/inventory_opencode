@@ -1,0 +1,22 @@
+{
+	"name": "inventory",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"engines": {
+		"node": ">=22"
+	},
+	"scripts": {
+		"dev": "pnpm -r --parallel run dev",
+		"build": "pnpm -r run build",
+		"lint": "pnpm -r run lint",
+		"format": "prettier --check .",
+		"typecheck": "pnpm -r run typecheck",
+		"test": "pnpm -r run test",
+		"check": "pnpm lint && pnpm format && pnpm typecheck && pnpm test"
+	},
+	"devDependencies": {
+		"prettier": "^3.4.0",
+		"prettier-plugin-svelte": "^4.2.0"
+	}
+}
