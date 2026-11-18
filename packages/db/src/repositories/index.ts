@@ -32,10 +32,14 @@ export {
 export { searchItems, type SearchItemsOptions, type SearchItemsResult } from './search.js';
 export {
 	listProjects,
+	listProjectsWithStats,
 	getProject,
+	getProjectDetail,
 	createProject,
 	updateProject,
-	NotFoundError as ProjectNotFoundError,
+	type ProjectStats,
+	type ProjectSummary,
+	type ProjectDetail,
 	type CreateProjectInput,
 	type UpdateProjectInput,
 } from './projects.js';
@@ -48,3 +52,18 @@ export {
 	AllocationError,
 	type CreateAllocationInput,
 } from './allocations.js';
+export {
+	summaryReport,
+	lowStockReport,
+	movementsReport,
+	projectsReport,
+	toCsv,
+	type SummaryReport,
+	type SummaryRow,
+	type LowStockReport,
+	type LowStockRow,
+	type MovementsReport,
+	type MovementReportRow,
+	type ProjectsReport,
+	type ProjectReportRow,
+} from './reports.js';

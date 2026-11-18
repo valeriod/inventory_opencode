@@ -2,8 +2,12 @@ import cors from '@fastify/cors';
 import Fastify, { type FastifyInstance } from 'fastify';
 import type { Db } from '@inventory/db';
 import { errorHandler } from './errors.js';
+import { registerAllocationRoutes } from './routes/allocations.js';
 import { registerCategoryRoutes } from './routes/categories.js';
 import { registerItemsRoutes } from './routes/items.js';
+import { registerLabelRoutes } from './routes/labels.js';
+import { registerProjectRoutes } from './routes/projects.js';
+import { registerReportRoutes } from './routes/reports.js';
 
 export function buildApp(db: Db): FastifyInstance {
 	const app = Fastify({
@@ -22,6 +26,10 @@ export function buildApp(db: Db): FastifyInstance {
 
 	registerItemsRoutes(app, db);
 	registerCategoryRoutes(app, db);
+	registerProjectRoutes(app, db);
+	registerAllocationRoutes(app, db);
+	registerReportRoutes(app, db);
+	registerLabelRoutes(app, db);
 
 	return app;
 }

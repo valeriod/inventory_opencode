@@ -106,14 +106,26 @@
 					<p class="text-sm text-neutral-500">{item.description}</p>
 				{/if}
 			</div>
-			<button
-				class="rounded-md border border-red-300 px-3 py-1.5 text-sm text-red-700 hover:bg-red-50"
-				onclick={() =>
-					confirm(`Delete ${item.sku}? This only works when stock is 0 and nothing is reserved.`) &&
-					deleteMutation.mutate()}
-			>
-				Delete
-			</button>
+			<div class="flex flex-wrap gap-2">
+				<!-- eslint-disable svelte/no-navigation-without-resolve -->
+				<a
+					href={api.labelsPrintUrl([item.sku], 'a5')}
+					target="_blank"
+					rel="noopener noreferrer"
+					class="rounded-md border border-neutral-300 px-3 py-1.5 text-sm hover:bg-neutral-100"
+				>
+					Print label
+				</a>
+				<!-- eslint-enable svelte/no-navigation-without-resolve -->
+				<button
+					class="rounded-md border border-red-300 px-3 py-1.5 text-sm text-red-700 hover:bg-red-50"
+					onclick={() =>
+						confirm(`Delete ${item.sku}? This only works when stock is 0 and nothing is reserved.`) &&
+						deleteMutation.mutate()}
+				>
+					Delete
+				</button>
+			</div>
 		</div>
 
 		<div class="grid grid-cols-2 gap-4 sm:grid-cols-4">
@@ -155,6 +167,31 @@
 				</dl>
 			</section>
 		{/if}
+
+		<section class="rounded-lg border border-neutral-200 bg-white p-4">
+			<h2 class="mb-3 text-sm font-semibold text-neutral-700">Label</h2>
+			<div class="flex flex-wrap items-end gap-6">
+				<div>
+					<div class="mb-1 text-xs text-neutral-500">Code 128 (SKU)</div>
+					<img
+						src={api.itemLabelUrl(item.sku, { format: 'png', size: 'code128' })}
+						alt={`Code 128 barcode for ${item.sku}`}
+						class="h-16 w-auto border border-neutral-100 bg-white"
+					/>
+				</div>
+				<div>
+					<div class="mb-1 text-xs text-neutral-500">QR (SKU)</div>
+					<img
+						src={api.itemLabelUrl(item.sku, { format: 'png', size: 'qr' })}
+						alt={`QR code for ${item.sku}`}
+						class="h-24 w-24 border border-neutral-100 bg-white"
+					/>
+				</div>
+				<div class="text-xs text-neutral-500">
+					SKU is encoded in both symbologies. Use <a href={resolve('/labels')} class="underline">Labels</a> for batch print sheets.
+				</div>
+			</div>
+		</section>
 
 		<section class="rounded-lg border border-neutral-200 bg-white p-4">
 			<h2 class="mb-3 text-sm font-semibold text-neutral-700">Move quantity</h2>

@@ -16,12 +16,16 @@ export type Engine = 'sqlite' | 'postgres';
 
 export { getCategoryByName, listCategories } from '@inventory/db';
 
+export interface ApiResponse {
+	status: number;
+	json: () => Promise<unknown>;
+	text: () => Promise<string>;
+	headers: Record<string, string | string[] | number | undefined>;
+}
+
 export interface ApiEnv {
 	db: Db;
-	request: (req: { url: string; method?: string; body?: unknown }) => Promise<{
-		status: number;
-		json: () => Promise<unknown>;
-	}>;
+	request: (req: { url: string; method?: string; body?: unknown }) => Promise<ApiResponse>;
 	teardown: () => Promise<void>;
 }
 
@@ -89,6 +93,8 @@ export async function makeEnv(engine: Engine): Promise<ApiEnv> {
 		return {
 			status: res.statusCode,
 			json: () => Promise.resolve(res.json()),
+			text: () => Promise.resolve(res.payload),
+			headers: res.headers as Record<string, string | string[] | number | undefined>,
 		};
 	};
 

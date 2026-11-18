@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import { page } from '$app/state';
 	import FieldInput from '#lib/components/FieldInput.svelte';
 	import { api, ApiError, type Category } from '#lib/api';
 	import { fromFieldValue, isFilled, toFieldValue } from '#lib/field-values';
@@ -7,7 +8,16 @@
 	import { resolve } from '$app/paths';
 
 	let categoryId = $state('');
+	const initialSku = $derived.by(() => (page.url.searchParams.get('sku') ?? '').toUpperCase());
 	let sku = $state('');
+	let skuPrefilled = $state(false);
+
+	$effect(() => {
+		if (!skuPrefilled && initialSku) {
+			sku = initialSku;
+			skuPrefilled = true;
+		}
+	});
 	let name = $state('');
 	let unit = $state('');
 	let location = $state('');
@@ -56,7 +66,7 @@
 				data[field.key] = value;
 			}
 			const item = await api.createItem({
-				sku: sku.trim(),
+				sku: sku.trim().toUpperCase(),
 				categoryId,
 				name: name.trim(),
 				description: description.trim() || null,
@@ -134,8 +144,11 @@
 					required
 					pattern={'[A-Z0-9][A-Z0-9-%]{2,31}'}
 					title="Uppercase letters/digits, 3–32 chars, may include - and %"
-					class="w-full rounded-md border border-neutral-300 px-3 py-1.5 font-mono text-sm"
+					autocapitalize="characters"
+					oninput={() => (sku = sku.toUpperCase())}
+					class="w-full rounded-md border border-neutral-300 px-3 py-1.5 font-mono text-sm uppercase"
 				/>
+				<p class="mt-1 text-xs text-neutral-500">3–32 chars: A–Z, 0–9, <code>-</code>, <code>%</code></p>
 			</div>
 			<div>
 				<label class="mb-1 block text-sm font-medium">

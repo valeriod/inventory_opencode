@@ -6,13 +6,15 @@ import {
 	allocations as sqliteAllocations,
 	items as sqliteItems,
 	movements as sqliteMovements,
+	projects as sqliteProjects,
 } from '../schema/sqlite.js';
 import {
 	allocations as postgresAllocations,
 	items as postgresItems,
 	movements as postgresMovements,
+	projects as postgresProjects,
 } from '../schema/postgres.js';
-import { roundQty, reservedQuantity } from './items.js';
+import { NotFoundError, roundQty } from './items.js';
 
 export class AllocationError extends Error {
 	constructor(message: string) {
@@ -28,19 +30,37 @@ export interface CreateAllocationInput {
 	note?: string | null;
 }
 
+function assertPositiveQuantity(quantity: number): number {
+	const q = roundQty(quantity);
+	if (!Number.isFinite(q) || q <= 0) {
+		throw new AllocationError('allocation quantity must be a positive number');
+	}
+	return q;
+}
+
+async function assertProjectExists(db: Db, projectId: string): Promise<void> {
+	const rows =
+		db.dialect === 'sqlite'
+			? await db.db.select({ id: sqliteProjects.id }).from(sqliteProjects).where(eq(sqliteProjects.id, projectId))
+			: await db.db
+					.select({ id: postgresProjects.id })
+					.from(postgresProjects)
+					.where(eq(postgresProjects.id, projectId));
+	if (rows.length === 0) throw new NotFoundError('project', projectId);
+}
+
 /**
  * Set parts aside for a project (plan §3.4). Atomic: available-quantity
  * check + allocation insert + reservation movement row happen in one
  * transaction. Reserving never mutates `quantity_on_hand`.
  *
- * SQLite uses a synchronous transaction (better-sqlite3 v13 requirement);
- * Postgres uses an async one.
+ * SQLite uses a synchronous transaction (better-sqlite3 v13 requirement).
+ * Postgres locks the item row (FOR UPDATE) so concurrent allocations for
+ * the same SKU cannot both observe the same available quantity.
  */
 export async function createAllocation(db: Db, input: CreateAllocationInput): Promise<Allocation> {
-	const quantity = roundQty(input.quantity);
-	if (!Number.isFinite(quantity) || quantity <= 0) {
-		throw new AllocationError('allocation quantity must be a positive number');
-	}
+	await assertProjectExists(db, input.projectId);
+	const quantity = assertPositiveQuantity(input.quantity);
 	const now = new Date().toISOString();
 	const id = randomUUID();
 
@@ -48,7 +68,7 @@ export async function createAllocation(db: Db, input: CreateAllocationInput): Pr
 		let created: Allocation | null = null;
 		db.db.transaction((tx) => {
 			const onHandRows = tx.select().from(sqliteItems).where(eq(sqliteItems.sku, input.sku)).all();
-			if (onHandRows.length === 0) throw new AllocationError(`item not found: ${input.sku}`);
+			if (onHandRows.length === 0) throw new NotFoundError('item', input.sku);
 			const reservedRows = tx
 				.select()
 				.from(sqliteAllocations)
@@ -102,12 +122,14 @@ export async function createAllocation(db: Db, input: CreateAllocationInput): Pr
 		const onHandRows = await tx
 			.select()
 			.from(postgresItems)
-			.where(eq(postgresItems.sku, input.sku));
-		if (onHandRows.length === 0) throw new AllocationError(`item not found: ${input.sku}`);
+			.where(eq(postgresItems.sku, input.sku))
+			.for('update');
+		if (onHandRows.length === 0) throw new NotFoundError('item', input.sku);
 		const reservedRows = await tx
 			.select()
 			.from(postgresAllocations)
-			.where(and(eq(postgresAllocations.sku, input.sku), isNull(postgresAllocations.releasedAt)));
+			.where(and(eq(postgresAllocations.sku, input.sku), isNull(postgresAllocations.releasedAt)))
+			.for('update');
 		const reserved = roundQty(reservedRows.reduce((sum, r) => sum + Number(r.quantity), 0));
 		const onHand = Number(onHandRows[0].quantityOnHand);
 		const available = roundQty(onHand - reserved);
@@ -186,18 +208,17 @@ export async function listProjectAllocations(
 	return rows;
 }
 
-/**
- * Release a set-aside. Atomic: released_at set + item on-hand check.
- */
+/** Release a set-aside (plan §3.4). Records a `released` movement row. */
 export async function releaseAllocation(db: Db, id: string): Promise<Allocation> {
-	const allocation = await getAllocation(db, id);
-	if (!allocation) throw new AllocationError(`allocation not found: ${id}`);
-	if (allocation.releasedAt) throw new AllocationError(`allocation ${id} already released`);
 	const now = new Date().toISOString();
 
 	if (db.dialect === 'sqlite') {
 		let released: Allocation | null = null;
 		db.db.transaction((tx) => {
+			const rows = tx.select().from(sqliteAllocations).where(eq(sqliteAllocations.id, id)).all();
+			const allocation = rows[0] as Allocation | undefined;
+			if (!allocation) throw new NotFoundError('allocation', id);
+			if (allocation.releasedAt) throw new AllocationError(`allocation ${id} already released`);
 			const itemRows = tx
 				.select()
 				.from(sqliteItems)
@@ -226,6 +247,14 @@ export async function releaseAllocation(db: Db, id: string): Promise<Allocation>
 	}
 
 	return db.db.transaction(async (tx) => {
+		const rows = await tx
+			.select()
+			.from(postgresAllocations)
+			.where(eq(postgresAllocations.id, id))
+			.for('update');
+		const allocation = rows[0] as Allocation | undefined;
+		if (!allocation) throw new NotFoundError('allocation', id);
+		if (allocation.releasedAt) throw new AllocationError(`allocation ${id} already released`);
 		const itemRows = await tx
 			.select()
 			.from(postgresItems)
@@ -250,43 +279,88 @@ export async function releaseAllocation(db: Db, id: string): Promise<Allocation>
 
 /**
  * Edit an active allocation's quantity, keeping available quantity
- * non-negative.
+ * non-negative. Runs in a transaction so the available-qty check and
+ * update are atomic.
  */
 export async function updateAllocationQuantity(
 	db: Db,
 	id: string,
 	quantity: number,
 ): Promise<Allocation> {
-	const allocation = await getAllocation(db, id);
-	if (!allocation) throw new AllocationError(`allocation not found: ${id}`);
-	if (allocation.releasedAt) throw new AllocationError(`allocation ${id} is already released`);
-	const newQuantity = roundQty(quantity);
-	if (!Number.isFinite(newQuantity) || newQuantity <= 0) {
-		throw new AllocationError('allocation quantity must be a positive number');
-	}
-	const reserved = await reservedQuantity(db, allocation.sku);
-	const othersReserved = roundQty(reserved - allocation.quantity);
-	const onHandRows: { quantityOnHand: number }[] =
-		db.dialect === 'sqlite'
-			? await db.db.select().from(sqliteItems).where(eq(sqliteItems.sku, allocation.sku))
-			: await db.db.select().from(postgresItems).where(eq(postgresItems.sku, allocation.sku));
-	if (onHandRows.length === 0) throw new AllocationError(`item not found: ${allocation.sku}`);
-	const available = roundQty(Number(onHandRows[0].quantityOnHand) - othersReserved);
-	if (newQuantity > available) {
-		throw new AllocationError(
-			`insufficient available quantity for ${allocation.sku}: requested ${newQuantity}, available ${available}`,
-		);
-	}
+	const newQuantity = assertPositiveQuantity(quantity);
+
 	if (db.dialect === 'sqlite') {
-		await db.db
-			.update(sqliteAllocations)
-			.set({ quantity: newQuantity })
-			.where(eq(sqliteAllocations.id, id));
-	} else {
-		await db.db
+		let updated: Allocation | null = null;
+		db.db.transaction((tx) => {
+			const rows = tx.select().from(sqliteAllocations).where(eq(sqliteAllocations.id, id)).all();
+			const allocation = rows[0] as Allocation | undefined;
+			if (!allocation) throw new NotFoundError('allocation', id);
+			if (allocation.releasedAt) throw new AllocationError(`allocation ${id} is already released`);
+			const itemRows = tx
+				.select()
+				.from(sqliteItems)
+				.where(eq(sqliteItems.sku, allocation.sku))
+				.all();
+			if (itemRows.length === 0) throw new NotFoundError('item', allocation.sku);
+			const reservedRows = tx
+				.select()
+				.from(sqliteAllocations)
+				.where(
+					and(eq(sqliteAllocations.sku, allocation.sku), isNull(sqliteAllocations.releasedAt)),
+				)
+				.all();
+			const reserved = roundQty(reservedRows.reduce((sum, r) => sum + Number(r.quantity), 0));
+			const othersReserved = roundQty(reserved - Number(allocation.quantity));
+			const available = roundQty(Number(itemRows[0].quantityOnHand) - othersReserved);
+			if (newQuantity > available) {
+				throw new AllocationError(
+					`insufficient available quantity for ${allocation.sku}: requested ${newQuantity}, available ${available}`,
+				);
+			}
+			tx.update(sqliteAllocations)
+				.set({ quantity: newQuantity })
+				.where(eq(sqliteAllocations.id, id))
+				.run();
+			updated = { ...allocation, quantity: newQuantity };
+		});
+		if (!updated) throw new Error('allocation update did not complete');
+		return updated;
+	}
+
+	return db.db.transaction(async (tx) => {
+		const rows = await tx
+			.select()
+			.from(postgresAllocations)
+			.where(eq(postgresAllocations.id, id))
+			.for('update');
+		const allocation = rows[0] as Allocation | undefined;
+		if (!allocation) throw new NotFoundError('allocation', id);
+		if (allocation.releasedAt) throw new AllocationError(`allocation ${id} is already released`);
+		const itemRows = await tx
+			.select()
+			.from(postgresItems)
+			.where(eq(postgresItems.sku, allocation.sku))
+			.for('update');
+		if (itemRows.length === 0) throw new NotFoundError('item', allocation.sku);
+		const reservedRows = await tx
+			.select()
+			.from(postgresAllocations)
+			.where(
+				and(eq(postgresAllocations.sku, allocation.sku), isNull(postgresAllocations.releasedAt)),
+			)
+			.for('update');
+		const reserved = roundQty(reservedRows.reduce((sum, r) => sum + Number(r.quantity), 0));
+		const othersReserved = roundQty(reserved - Number(allocation.quantity));
+		const available = roundQty(Number(itemRows[0].quantityOnHand) - othersReserved);
+		if (newQuantity > available) {
+			throw new AllocationError(
+				`insufficient available quantity for ${allocation.sku}: requested ${newQuantity}, available ${available}`,
+			);
+		}
+		await tx
 			.update(postgresAllocations)
 			.set({ quantity: newQuantity })
 			.where(eq(postgresAllocations.id, id));
-	}
-	return { ...allocation, quantity: newQuantity };
+		return { ...allocation, quantity: newQuantity } satisfies Allocation;
+	});
 }
