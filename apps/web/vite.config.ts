@@ -1,3 +1,4 @@
+import tailwindcss from '@tailwindcss/vite';
 import adapter from '@sveltejs/adapter-node';
 import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vite';
@@ -12,5 +13,12 @@ export default defineConfig({
 			},
 			adapter: adapter(),
 		}),
+		tailwindcss(),
 	],
+	server: {
+		proxy: {
+			// In dev the SvelteKit server fronts the Fastify API.
+			'/api': 'http://localhost:3000',
+		},
+	},
 });

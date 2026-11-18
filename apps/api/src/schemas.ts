@@ -38,6 +38,11 @@ export const moveItemBody = z
 	})
 	.strict();
 
+export const listMovementsQuery = z.object({
+	limit: z.coerce.number().int().min(1).max(500).optional(),
+	offset: z.coerce.number().int().min(0).optional(),
+});
+
 /**
  * GET /api/items query string. `passthrough()` keeps the dynamic
  * `field[key]=value` filters, which are extracted separately in the route.

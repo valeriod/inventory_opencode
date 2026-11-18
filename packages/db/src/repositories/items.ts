@@ -1,4 +1,4 @@
-import { and, eq, gte, isNull } from 'drizzle-orm';
+import { and, desc, eq, gte, isNull } from 'drizzle-orm';
 import { decodeJson } from '../dialect.js';
 import { skuSchema, validateItemData, type FieldSchema } from '../field-schema.js';
 import type { Db } from '../client.js';
@@ -440,14 +440,14 @@ export async function listMovements(
 					.select()
 					.from(sqliteMovements)
 					.where(eq(sqliteMovements.sku, sku))
-					.orderBy(sqliteMovements.id)
+					.orderBy(desc(sqliteMovements.id))
 					.limit(limit)
 					.offset(offset)
 			: await db.db
 					.select()
 					.from(postgresMovements)
 					.where(eq(postgresMovements.sku, sku))
-					.orderBy(postgresMovements.id)
+					.orderBy(desc(postgresMovements.id))
 					.limit(limit)
 					.offset(offset);
 	return rows.map((r) => ({

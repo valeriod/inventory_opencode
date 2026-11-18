@@ -1,7 +1,7 @@
 # Inventory App — Plan
 
 Date: 2026-11-17
-Status: In progress — M0 + M1 + M2 complete (2026-11-18)
+Status: In progress — M0 + M1 + M2 + M3 complete (2026-11-18)
 
 ## 1. Goals
 
@@ -223,8 +223,19 @@ keep old values, and the PWA hides fields not in the current schema.
 - SvelteKit (Svelte 5), `@sveltejs/adapter-node` behind the Fastify server
   (single deployable) — or `adapter-static` + any static host for the PWA.
 - `vite-plugin-pwa` (Workbox) for service worker, manifest, icons.
-- Tailwind CSS for styling; `bits-ui` for components.
-- TanStack Query for data fetching/caching; Zustand for small UI state.
+- Tailwind CSS v4 for styling.
+- TanStack Query (Svelte) for data fetching/caching; Svelte stores for small
+  UI state.
+
+Deviation notes (implemented 2026-11-18, M3):
+
+- `bits-ui` is headless/unstyled (melt-style primitives, no default CSS), so
+  M3 uses plain Tailwind-styled native controls instead; revisit if custom
+  widgets (e.g. virtualized lists) become needed.
+- `vite-plugin-pwa` deferred to a later polish milestone; the app is fully
+  functional without the service worker.
+- `@tanstack/svelte-query` v6 API (`createQuery`/`createMutation` +
+  `QueryClientProvider`), not the older `useQuery`/`QueryClientContext` API.
 - Shared Zod field-schema types imported from `packages/db` → the item form
   is **generated from the category's field schema** (no per-category code).
 

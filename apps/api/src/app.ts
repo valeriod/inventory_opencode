@@ -2,6 +2,7 @@ import cors from '@fastify/cors';
 import Fastify, { type FastifyInstance } from 'fastify';
 import type { Db } from '@inventory/db';
 import { errorHandler } from './errors.js';
+import { registerCategoryRoutes } from './routes/categories.js';
 import { registerItemsRoutes } from './routes/items.js';
 
 export function buildApp(db: Db): FastifyInstance {
@@ -20,6 +21,7 @@ export function buildApp(db: Db): FastifyInstance {
 	}));
 
 	registerItemsRoutes(app, db);
+	registerCategoryRoutes(app, db);
 
 	return app;
 }

@@ -256,8 +256,9 @@ function suite(engine: string, makeEnv: () => Promise<TestEnv>) {
 
 				const movements = await listMovements(env.db, 'RES-10K-1%');
 				expect(movements).toHaveLength(2);
-				expect(movements.map((m) => m.reason)).toEqual(['received', 'used']);
-				expect(movements[1].resultingQty).toBe(7);
+				// newest-first ordering
+				expect(movements.map((m) => m.reason)).toEqual(['used', 'received']);
+				expect(movements[0].resultingQty).toBe(7);
 			} finally {
 				await env.teardown();
 			}

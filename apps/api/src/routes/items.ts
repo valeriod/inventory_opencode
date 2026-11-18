@@ -5,13 +5,20 @@ import {
 	deleteItem,
 	getCategory,
 	getItem,
+	listMovements,
 	moveItem,
 	NotFoundError,
 	searchItems,
 	updateItem,
 	type Db,
 } from '@inventory/db';
-import { createItemBody, listItemsQuery, moveItemBody, updateItemBody } from '../schemas.js';
+import {
+	createItemBody,
+	listItemsQuery,
+	listMovementsQuery,
+	moveItemBody,
+	updateItemBody,
+} from '../schemas.js';
 
 /** Extract `field[key]=value` query params into a plain object. */
 function extractFieldFilters(query: Record<string, unknown>): Record<string, string> {
@@ -75,5 +82,15 @@ export function registerItemsRoutes(app: FastifyInstance, db: Db): void {
 		const { sku } = req.params as { sku: string };
 		const body = moveItemBody.parse(req.body);
 		return moveItem(db, { sku, ...body });
+	});
+
+	app.get('/api/items/:sku/movements', async (req) => {
+		const { sku } = req.params as { sku: string };
+		const query = listMovementsQuery.parse(req.query);
+		const item = await getItem(db, sku);
+		if (!item) throw new NotFoundError('item', sku);
+		return {
+			movements: await listMovements(db, sku, { limit: query.limit, offset: query.offset }),
+		};
 	});
 }
