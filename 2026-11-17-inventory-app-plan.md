@@ -1,7 +1,7 @@
 # Inventory App — Plan
 
 Date: 2026-11-17
-Status: Draft for review
+Status: In progress — M0 complete (2026-11-18), M1 in progress
 
 ## 1. Goals
 
@@ -324,15 +324,14 @@ focused work each), M3–M6 roughly parallelizable, M7–M8 polish.
 | SKU collisions / bad data entry                               | SKU pattern validation (e.g. `^[A-Z0-9][A-Z0-9\-]{2,31}$`), uniqueness enforced by PK, scan-create flow double-checks against existing items.                          |
 | Field-schema edits break old data                             | Values kept as-is, unknown fields hidden, type changes flagged in admin UI.                                                                                            |
 
-## 11. Open questions (answer before M1)
+## 11. Open questions — ANSWERED 2026-11-18 (before M1)
 
-1. Currency and tax for `unit_cost` — single currency assumed?
-2. Do we need a "per-package" qty (e.g. 1000 resistors per reel) separate
-   from on-hand qty, or is on-hand + unit sufficient?
-3. Deployment target: run the API on this DGX Spark for a single operator,
-   or on a server for multiple users? (Affects the Postgres emphasis and
-   whether we add any auth.)
-4. Label printer: generic printer (browser print) is assumed — any direct
-   thermal-label integration needed?
-5. Should categories be nestable (e.g. "Semiconductors > Diodes") or is a
-   flat list fine for v1?
+1. **Currency/tax** — single currency, **USD**. No tax handling in v1;
+   `unit_cost` is a plain USD amount.
+2. **Per-package qty** — **not needed**. On-hand qty + `unit` is sufficient.
+3. **Deployment target** — **single operator on this DGX Spark** (Arm64,
+   Node 22 + pnpm, Docker available). No auth in v1. SQLite is the default
+   backend; Postgres is the shared/production option, kept first-class.
+4. **Label printer** — **generic printer via browser print**. No direct
+   thermal-label integration.
+5. **Category nesting** — **flat list** for v1.

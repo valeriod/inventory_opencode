@@ -1,0 +1,42 @@
+{
+	"name": "@inventory/db",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"import": "./dist/index.js"
+		}
+	},
+	"scripts": {
+		"build": "tsc -p tsconfig.build.json",
+		"prepare": "pnpm build",
+		"lint": "eslint .",
+		"typecheck": "tsc --noEmit",
+		"test": "vitest run",
+		"test:watch": "vitest",
+		"migrate": "tsx src/migrate.ts",
+		"seed": "tsx src/seed.ts",
+		"generate": "drizzle-kit generate --config drizzle.config.postgres.ts && drizzle-kit generate --config drizzle.config.sqlite.ts"
+	},
+	"dependencies": {
+		"better-sqlite3": "^12.11.0",
+		"drizzle-orm": "^0.45.0",
+		"postgres": "^4.0.0",
+		"zod": "^4.0.0"
+	},
+	"devDependencies": {
+		"@eslint/js": "^10.0.1",
+		"@types/better-sqlite3": "^9.6.0",
+		"@types/node": "^22.10.0",
+		"drizzle-kit": "^0.31.0",
+		"eslint": "^10.15.0",
+		"eslint-config-prettier": "^10.1.0",
+		"globals": "^17.14.0",
+		"tsx": "^4.19.0",
+		"typescript": "^6.0.3",
+		"typescript-eslint": "^8.35.0",
+		"vitest": "^5.1.1"
+	}
+}
