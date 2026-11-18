@@ -3,8 +3,8 @@ node_modules
 # Build output
 dist
 .output
-/.svelte-kit
-/build
+.svelte-kit/
+build
 
 # Local data
 data
