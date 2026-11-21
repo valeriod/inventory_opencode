@@ -1,7 +1,7 @@
 # Inventory App — Plan
 
 Date: 2026-11-17
-Status: In progress — M0 + M1 + M2 + M3 + M4 + M5 + M6 + M7 complete (2026-11-18)
+Status: M0–M8 complete (2026-11-18); M9 tests/CI/Playwright pending
 
 ## 1. Goals
 
